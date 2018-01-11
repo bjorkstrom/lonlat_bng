@@ -18,6 +18,7 @@ use super::convert_etrs89_to_ll_threaded_vec;
 use super::convert_osgb36_to_ll_threaded_vec;
 use super::convert_osgb36_to_etrs89_threaded_vec;
 use super::convert_epsg3857_to_wgs84_threaded_vec;
+use super::convert_osgb36_odn;
 
 /// Free memory which Rust has allocated across the FFI boundary (f64 values)
 ///
@@ -247,4 +248,36 @@ pub extern "C" fn convert_osgb36_to_etrs89_threaded(eastings: Array,
 pub extern "C" fn convert_epsg3857_to_wgs84_threaded(x: Array, y: Array) -> (Array, Array) {
     let (res_x, res_y) = convert_epsg3857_to_wgs84_threaded_vec(x.into(), y.into());
     (res_x.into(), res_y.into())
+}
+
+///
+/// FFI-compatible wrapper for convert_osgb36_odn
+///
+/// returns  0 - coordinates succesfully converted
+///         -1 - specified lon/lat are outside of the OSGB36 bounding box
+///
+#[no_mangle]
+pub unsafe extern fn etrs89_to_osgb36_odn(longitude: f64,
+                                          latitude: f64,
+                                          altitude: f64,
+                                          easting: *mut f64,
+                                          northing: *mut f64,
+                                          height: *mut f64) -> i32 {
+
+    let res = convert_osgb36_odn(&longitude, &latitude, &altitude);
+    if res.is_err()
+    {
+        // probably longitude latitude is outside of OSGB36 bounding box
+        // return with error code
+        return -1;
+    }
+
+    // write values in the result type to the 'out' parameters
+    let (e, n, h) = res.unwrap();
+
+    *easting = e;
+    *northing = n;
+    *height = h;
+
+    0 // success
 }
