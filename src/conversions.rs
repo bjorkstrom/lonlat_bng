@@ -141,6 +141,27 @@ pub fn convert_osgb36(longitude: &f64, latitude: &f64) -> Result<(f64, f64), ()>
     Ok(((eastings + e_shift).round_to_mm(), (northings + n_shift).round_to_mm()))
 }
 
+///
+/// Perform ETRS89 Longitude, Latitude and Height to
+/// OSGB36 Easting, Northing and ODN orthometric height
+/// using [OSTN15/OSGM15](https://www.ordnancesurvey.co.uk/business-and-government/help-and-support/navigation-technology/os-net/formats-for-developers.html) data
+///
+/// # Examples
+///
+/// ```
+/// use lonlat_bng::convert_osgb36_odn
+/// assert_eq!((651409.804, 313177.450, 63.822), convert_osgb36_odn(&1.716073973, &52.658007833, &108.05).unwrap());
+#[allow(non_snake_case)]
+pub fn convert_osgb36_odn(longitude: &f64, latitude: &f64, height: &f64) -> Result<(f64, f64, f64), ()> {
+    // convert input to ETRS89
+    let (eastings, northings) = convert_etrs89(longitude, latitude)?;
+    // obtain OSTN15/OSGM15 corrections, and incorporate
+    let (e_shift, n_shift, h_shift) = ostn15_shifts(&eastings, &northings)?;
+    Ok(((eastings + e_shift).round_to_mm(),
+        (northings + n_shift).round_to_mm(),
+        (height - h_shift).round_to_mm()))
+}
+
 // Intermediate calculation used for lon, lat to ETRS89 and reverse conversion
 fn compute_m(phi: &f64, b: &f64, n: &f64) -> f64 {
     let p_plus = *phi + PHI0;
@@ -501,6 +522,7 @@ mod tests {
 
     use super::convert_etrs89;
     use super::convert_osgb36;
+    use super::convert_osgb36_odn;
     use super::convert_etrs89_to_osgb36;
     use super::convert_etrs89_to_ll;
     use super::convert_osgb36_to_ll;
@@ -553,6 +575,16 @@ mod tests {
         let latitude = 52.658007833;
         let expected = (651409.804, 313177.450);
         assert_eq!(expected, convert_osgb36(&longitude, &latitude).unwrap());
+    }
+
+    #[test]
+    fn convert_osgb36_odn_conversion() {
+        // these are the input values and final result in the example on p20–23
+        let longitude = 1.716073973;
+        let latitude = 52.658007833;
+        let height = 108.05;
+        let expected = (651409.804, 313177.450, 63.822);
+        assert_eq!(expected, convert_osgb36_odn(&longitude, &latitude, &height).unwrap());
     }
 
     #[test]
