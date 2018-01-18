@@ -28,9 +28,9 @@ pub const RAD: f64 = PI / 180.;
 pub const MAX_EASTING: f64 = 700000.000;
 pub const MAX_NORTHING: f64 = 1250000.000;
 
-pub const MIN_LONGITUDE: f64 = -7.5600;
+pub const MIN_LONGITUDE: f64 = -8.6000;
 pub const MAX_LONGITUDE: f64 = 1.7800;
-pub const MIN_LATITUDE: f64 = 49.9600;
+pub const MIN_LATITUDE: f64 = 49.9200;
 pub const MAX_LATITUDE: f64 = 60.8400;
 
 // lon and lat of true origin
